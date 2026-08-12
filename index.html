@@ -198,6 +198,7 @@
 
     /* نافذة الكاميرا للباركود */
     #scanner-container { width: 100%; border-radius: 12px; overflow: hidden; background: #000; margin-bottom: 10px; }
+    #reader video { object-fit: cover !important; border-radius: 12px; }
   </style>
 </head>
 <body>
@@ -458,53 +459,9 @@
 
 <script>
   /* --- 🔗 ربط تطبيق الويب المباشر عند استضافته على GitHub Pages --- */
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwdUme8ESA1QQ2XVgdrsuoPzqhbaLSup_RC7e_6fWXKJPYa6OFVE2Xt4n7JcN9DM_qzfw/exec";
+  const WEB_APP_URL = "ضع_رابط_WEB_APP_URL_هنا"; // ضع رابط Web App URL الخاص بك هنا
 
-// 1. دالة جلب البيانات (GET)
-async function getMedicationData() {
-  try {
-    const response = await fetch(`${WEB_APP_URL}?action=getMedicationData`, {
-      method: "GET",
-      redirect: "follow" // ضروري جداً لمتابعة إعادة توجيه جوجل
-    });
-    const result = await response.json();
-    if (result.success) {
-      console.log("تم جلب البيانات بنجاح:", result.data);
-      return result.data;
-    } else {
-      console.error("خطأ من السكريبت:", result.error);
-    }
-  } catch (err) {
-    console.error("فشل الاتصال بالسيرفر:", err);
-  }
-}
-
-// 2. دالة إرسال الفاتورة / المبيعات (POST)
-async function saveBookings(bookingsArray) {
-  try {
-    const response = await fetch(WEB_APP_URL, {
-      method: "POST",
-      // تنبيه هام: يجب استخدام text/plain لمنع خطأ CORS Preflight
-      headers: { "Content-Type": "text/plain;charset=utf-8" }, 
-      redirect: "follow",
-      body: JSON.stringify({
-        action: "saveMultipleBookings",
-        bookings: bookingsArray
-      })
-    });
-    const result = await response.json();
-    if (result.success) {
-      alert(result.data); // يظهر رسالة النجاح
-    } else {
-      alert("خطأ: " + result.error);
-    }
-  } catch (err) {
-    console.error("فشل الإرسال:", err);
-  }
-}
-  
   // محاكي للعمل الخارجي في حال عدم وجود google.script.run
-  
   if (typeof google === 'undefined' || !google.script || !google.script.run) {
     window.google = window.google || {};
     window.google.script = window.google.script || {};
@@ -559,29 +516,49 @@ async function saveBookings(bookingsArray) {
   let resetAppOnClose = false;
   window._selectedAdminMed = null;
 
-  /* --- متغيرات الماسح الضوئي --- */
+  /* --- متغيرات ودوال الماسح الضوئي (مجلوبة من Source 6) --- */
   let html5QrCode = null;
   let currentScanCallback = null;
+
+  function playBeepSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.15);
+    } catch (e) {
+      console.log('Audio error:', e);
+    }
+  }
 
   window.onload = function() {
     loadData();
   };
 
-  /* --- منطق تشغيل وإيقاف الكاميرا عند الطلب فقط --- */
+  /* --- منطق تشغيل وإيقاف الكاميرا عند الطلب بالتصحيح والتنبيه الصوتي --- */
   function startScanner(onSuccessCallback) {
     currentScanCallback = onSuccessCallback;
     document.getElementById('scanner-modal').classList.add('show');
     
     html5QrCode = new Html5Qrcode("reader");
-    const config = { fps: 15, qrbox: { width: 250, height: 150 } };
+    const config = { fps: 15, qrbox: { width: 250, height: 160 } };
 
     html5QrCode.start(
       { facingMode: "environment" },
       config,
       (decodedText) => {
+        playBeepSound();
+        if (navigator.vibrate) navigator.vibrate(100);
         closeScannerModal();
         if (currentScanCallback) currentScanCallback(decodedText);
-      }
+      },
+      (errorMessage) => {}
     ).catch(err => {
       showAlert("خطأ", "تعذر فتح الكاميرا: " + err, "⚠️");
       closeScannerModal();
