@@ -459,6 +459,49 @@
 <script>
   /* --- 🔗 ربط تطبيق الويب المباشر عند استضافته على GitHub Pages --- */
   const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwdUme8ESA1QQ2XVgdrsuoPzqhbaLSup_RC7e_6fWXKJPYa6OFVE2Xt4n7JcN9DM_qzfw/exec";
+
+// 1. دالة جلب البيانات (GET)
+async function getMedicationData() {
+  try {
+    const response = await fetch(`${WEB_APP_URL}?action=getMedicationData`, {
+      method: "GET",
+      redirect: "follow" // ضروري جداً لمتابعة إعادة توجيه جوجل
+    });
+    const result = await response.json();
+    if (result.success) {
+      console.log("تم جلب البيانات بنجاح:", result.data);
+      return result.data;
+    } else {
+      console.error("خطأ من السكريبت:", result.error);
+    }
+  } catch (err) {
+    console.error("فشل الاتصال بالسيرفر:", err);
+  }
+}
+
+// 2. دالة إرسال الفاتورة / المبيعات (POST)
+async function saveBookings(bookingsArray) {
+  try {
+    const response = await fetch(WEB_APP_URL, {
+      method: "POST",
+      // تنبيه هام: يجب استخدام text/plain لمنع خطأ CORS Preflight
+      headers: { "Content-Type": "text/plain;charset=utf-8" }, 
+      redirect: "follow",
+      body: JSON.stringify({
+        action: "saveMultipleBookings",
+        bookings: bookingsArray
+      })
+    });
+    const result = await response.json();
+    if (result.success) {
+      alert(result.data); // يظهر رسالة النجاح
+    } else {
+      alert("خطأ: " + result.error);
+    }
+  } catch (err) {
+    console.error("فشل الإرسال:", err);
+  }
+}
   
   // محاكي للعمل الخارجي في حال عدم وجود google.script.run
   
