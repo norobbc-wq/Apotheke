@@ -458,9 +458,10 @@
 
 <script>
   /* --- 🔗 ربط تطبيق الويب المباشر عند استضافته على GitHub Pages --- */
-  const WEB_APP_URL = https://script.google.com/macros/s/AKfycbwdUme8ESA1QQ2XVgdrsuoPzqhbaLSup_RC7e_6fWXKJPYa6OFVE2Xt4n7JcN9DM_qzfw/exec
-
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwdUme8ESA1QQ2XVgdrsuoPzqhbaLSup_RC7e_6fWXKJPYa6OFVE2Xt4n7JcN9DM_qzfw/exec";
+  
   // محاكي للعمل الخارجي في حال عدم وجود google.script.run
+  
   if (typeof google === 'undefined' || !google.script || !google.script.run) {
     window.google = window.google || {};
     window.google.script = window.google.script || {};
